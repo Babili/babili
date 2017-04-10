@@ -1,0 +1,93 @@
+version: "2"
+
+networks:
+  main:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:9.5
+    networks:
+      - main
+    env_file: environments/postgres.env
+    volumes:
+      - /var/lib/postgresql/data/pgdata
+    ports:
+      - "62432:5432"
+
+  redis:
+    image: redis:3.0
+    networks:
+      - main
+    volumes:
+      - /data
+
+  rabbitmq:
+    image: rabbitmq:3.6-management
+    networks:
+      - main
+    hostname: rabbitmq
+    volumes:
+      - /var/lib/rabbitmq
+    env_file: environments/rabbitmq.env
+    ports:
+      - "62672:15672"
+
+  engine:
+    build: engine
+    networks:
+      - main
+    volumes:
+      - ./engine:/usr/src/app/
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    ports:
+      - "6280:3000"
+    env_file: environments/engine.env
+
+  engine-workers:
+    build: engine
+    networks:
+      - main
+    command: sidekiq
+    volumes:
+      - ./engine:/usr/src/app/
+    depends_on:
+      - redis
+      - postgres
+      - rabbitmq
+    env_file: environments/engine.env
+
+  clockwork:
+    build: clockwork
+    networks:
+      - main
+    depends_on:
+      - engine
+    env_file: environments/clockwork.env
+
+  pusher:
+    build: pusher
+    networks:
+      - main
+    volumes:
+      - ./pusher:/usr/src/app/
+    depends_on:
+      - engine
+      - rabbitmq
+      - redis
+    ports:
+      - "6281:3000"
+    env_file: environments/pusher.env
+
+  event-store:
+    image: crepesourcing/event-store:latest
+    networks:
+      - main
+    command: rake events:consume
+    links:
+      - postgres
+      - rabbitmq
+    env_file: environments/event-store.env

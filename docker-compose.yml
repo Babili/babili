@@ -62,6 +62,8 @@ services:
 
   clockwork:
     build: clockwork
+    volumes:
+      - ./clockwork:/usr/src/app
     networks:
       - main
     depends_on:

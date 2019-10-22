@@ -6,7 +6,7 @@ networks:
 
 services:
   postgres:
-    image: postgres:9.5
+    image: postgres:12.0-alpine
     networks:
       - main
     env_file: environments/postgres.env
@@ -16,7 +16,7 @@ services:
       - "62432:5432"
 
   redis:
-    image: redis:3.0
+    image: redis:5.0.6-alpine
     networks:
       - main
     volumes:

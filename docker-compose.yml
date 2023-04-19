@@ -63,7 +63,9 @@ services:
   clockwork:
     build: clockwork
     volumes:
-      - ./clockwork:/usr/src/app
+      - ./clockwork/Gemfile:/usr/src/app/Gemfile
+      - ./clockwork/Gemfile.lock:/usr/src/app/Gemfile.lock
+      - ./clockwork/clock.rb:/usr/src/app/clock.rb
     networks:
       - main
     depends_on:
